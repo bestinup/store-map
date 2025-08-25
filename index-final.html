@@ -7,57 +7,14 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        // 전역 변수와 핸들러를 먼저 정의
-        let useKakaoMap = false;
-        let kakaoLoadAttempted = false;
-        
-        function handleKakaoLoadSuccess() {
-            console.log('카카오 맵 API 로드 성공');
-            useKakaoMap = true;
-            kakaoLoadAttempted = true;
-        }
-        
-        function handleKakaoLoadError() {
-            console.log('카카오 맵 API 로드 실패');
-            useKakaoMap = false;
-            kakaoLoadAttempted = true;
-        }
-    </script>
-    <script>
-        // 동적으로 카카오 스크립트 로드
-        function loadKakaoScript() {
-            return new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                script.type = 'text/javascript';
-                script.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=98ffa625d54db78b33ce72ff85c3db4a';
-                script.onload = function() {
-                    console.log('카카오 스크립트 로드 성공');
-                    handleKakaoLoadSuccess();
-                    resolve();
-                };
-                script.onerror = function() {
-                    console.log('카카오 스크립트 로드 실패');
-                    handleKakaoLoadError();
-                    reject();
-                };
-                document.head.appendChild(script);
-            });
-        }
-        
-        // 페이지 로드 시 카카오 스크립트 로드 시도
-        document.addEventListener('DOMContentLoaded', function() {
-            loadKakaoScript().catch(() => {
-                console.log('카카오 스크립트 로드 실패 - OpenStreetMap 사용');
-            });
-        });
-    </script>
 </head>
 <body>
     <div class="container">
         <header class="header">
             <h1>온누리상품권 & 광주상생카드 가맹점 지도</h1>
-            <div id="map-status" style="text-align: center; color: rgba(255,255,255,0.8); font-size: 0.85rem; margin-bottom: 10px;"></div>
+            <div style="text-align: center; color: rgba(255,255,255,0.8); font-size: 0.85rem; margin-bottom: 10px;">
+                🌍 OpenStreetMap 기반 - 완전 무료 서비스
+            </div>
             <div class="controls">
                 <div class="filter-group">
                     <label class="filter-label">
@@ -113,6 +70,6 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script-final.js"></script>
 </body>
 </html>
