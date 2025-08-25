@@ -3,7 +3,6 @@ let map;
 let markers = [];
 let allStores = [];
 let filteredStores = [];
-let useKakaoMap = false;
 let mapType = 'none'; // 'kakao', 'leaflet', 'none'
 
 // 카카오맵 API 키 설정 (실제 사용시에는 본인의 API 키로 교체하세요)
@@ -85,40 +84,55 @@ const sampleStores = [
     }
 ];
 
-// 카카오 맵 로드 성공 핸들러
-function handleKakaoLoadSuccess() {
-    console.log('카카오 맵 API 로드 성공');
-    useKakaoMap = true;
-    mapType = 'kakao';
-}
-
-// 카카오 맵 로드 실패 핸들러
-function handleKakaoLoadError() {
-    console.log('카카오 맵 API 로드 실패, OpenStreetMap으로 전환');
-    useKakaoMap = false;
-    mapType = 'leaflet';
-}
-
 // DOM이 로드된 후 실행
 document.addEventListener('DOMContentLoaded', function() {
-    // 1초 후에 맵 초기화 시도 (API 로드 대기)
+    // 2초 후에 맵 초기화 시도 (카카오 API 로드 대기)
     setTimeout(function() {
-        // 카카오 맵이 사용 가능한지 확인
-        if (typeof kakao !== 'undefined' && kakao.maps && useKakaoMap) {
-            console.log('카카오 맵 사용');
+        initializeMap();
+    }, 2000);
+});
+
+// 지도 초기화 로직
+function initializeMap() {
+    console.log('=== 지도 초기화 디버깅 ===');
+    console.log('kakao 객체 존재:', typeof kakao !== 'undefined');
+    console.log('kakao.maps 존재:', typeof kakao !== 'undefined' && kakao.maps);
+    console.log('useKakaoMap 상태:', window.useKakaoMap);
+    console.log('kakaoLoadAttempted 상태:', window.kakaoLoadAttempted);
+    
+    // 카카오 맵이 사용 가능한지 확인
+    if (typeof kakao !== 'undefined' && kakao.maps && window.useKakaoMap) {
+        console.log('✅ 카카오 맵 사용 시작');
+        try {
             mapType = 'kakao';
             initKakaoMap();
-        } else {
-            // OpenStreetMap 사용
-            console.log('OpenStreetMap 사용');
+            console.log('✅ 카카오 맵 초기화 성공');
+        } catch (error) {
+            console.error('❌ 카카오 맵 초기화 실패:', error);
+            console.log('🔄 OpenStreetMap으로 전환');
             mapType = 'leaflet';
             initLeafletMap();
         }
+    } else {
+        // OpenStreetMap 사용
+        console.log('🌍 OpenStreetMap 사용');
         
-        initEventListeners();
-        loadStores();
-    }, 1000);
-});
+        // 실패 원인 분석
+        if (typeof kakao === 'undefined') {
+            console.log('원인: 카카오 스크립트 로드 실패');
+        } else if (!kakao.maps) {
+            console.log('원인: kakao.maps 객체 없음');
+        } else if (!window.useKakaoMap) {
+            console.log('원인: 도메인 미등록 또는 API 키 문제');
+        }
+        
+        mapType = 'leaflet';
+        initLeafletMap();
+    }
+    
+    initEventListeners();
+    loadStores();
+}
 
 // 카카오 지도 초기화
 function initKakaoMap() {

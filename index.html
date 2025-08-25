@@ -5,10 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>온누리상품권 & 광주상생카드 가맹점 지도</title>
     <link rel="stylesheet" href="styles.css">
-    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=98ffa625d54db78b33ce72ff85c3db4a" 
-            onerror="handleKakaoLoadError()" onload="handleKakaoLoadSuccess()"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // 전역 변수와 핸들러를 먼저 정의
+        let useKakaoMap = false;
+        let kakaoLoadAttempted = false;
+        
+        function handleKakaoLoadSuccess() {
+            console.log('카카오 맵 API 로드 성공');
+            useKakaoMap = true;
+            kakaoLoadAttempted = true;
+        }
+        
+        function handleKakaoLoadError() {
+            console.log('카카오 맵 API 로드 실패');
+            useKakaoMap = false;
+            kakaoLoadAttempted = true;
+        }
+    </script>
+    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=98ffa625d54db78b33ce72ff85c3db4a" 
+            onerror="handleKakaoLoadError()" onload="handleKakaoLoadSuccess()"></script>
 </head>
 <body>
     <div class="container">
