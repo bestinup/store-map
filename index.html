@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>온누리상품권 & 광주상생카드 가맹점 지도</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=3f07e84d4254f2c6bd8b3b90f5b32c5e"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>온누리상품권 & 광주상생카드 가맹점 지도</h1>
+            <div class="controls">
+                <div class="filter-group">
+                    <label class="filter-label">
+                        <input type="checkbox" id="onnuri-filter" checked>
+                        <span class="checkmark onnuri"></span>
+                        온누리상품권 가맹점
+                    </label>
+                    <label class="filter-label">
+                        <input type="checkbox" id="gwangju-filter" checked>
+                        <span class="checkmark gwangju"></span>
+                        광주상생카드 가맹점
+                    </label>
+                </div>
+                <div class="search-group">
+                    <input type="text" id="search-input" placeholder="가게명 또는 주소로 검색">
+                    <button id="search-btn">검색</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div id="map" class="map-container"></div>
+            
+            <div class="sidebar">
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-label">온누리상품권</span>
+                        <span class="stat-count" id="onnuri-count">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">광주상생카드</span>
+                        <span class="stat-count" id="gwangju-count">0</span>
+                    </div>
+                </div>
+                
+                <div class="store-list">
+                    <h3>가맹점 목록</h3>
+                    <div id="store-list-content">
+                        <!-- 매장 목록이 여기에 동적으로 추가됩니다 -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 매장 정보 모달 -->
+    <div id="store-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modal-body">
+                <!-- 매장 상세 정보가 여기에 표시됩니다 -->
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
