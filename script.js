@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
     waitForKakaoAPI();
 });
 
-// 카카오 API 완전 로드 대기 (타임아웃 없이 무한 시도)
+// 카카오 API 완전 로드 대기 (SDK load() 메서드 활용)
 function waitForKakaoAPI() {
     let attempts = 0;
     
@@ -146,8 +146,14 @@ function waitForKakaoAPI() {
         attempts++;
         console.log(`🔍 카카오 API 확인 시도 ${attempts}번째`);
         
-        // 카카오 API가 완전히 로드되었는지 확인
-        if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.LatLng && typeof kakao.maps.LatLng === 'function') {
+        // 카카오 SDK가 로드되고 kakao.maps.load()가 완료되었는지 확인
+        if (typeof kakao !== 'undefined' && 
+            kakao.maps && 
+            kakao.maps.LatLng && 
+            typeof kakao.maps.LatLng === 'function' &&
+            kakao.maps.Map &&
+            typeof kakao.maps.Map === 'function') {
+            
             console.log('✅ 카카오 API 완전 로드 확인됨! 지도 초기화를 시작합니다.');
             initializeMap();
         } else {
@@ -155,20 +161,24 @@ function waitForKakaoAPI() {
             if (typeof kakao === 'undefined') {
                 console.log('⏳ kakao 객체 로드 대기 중...');
             } else if (!kakao.maps) {
-                console.log('⏳ kakao.maps 객체 로드 대기 중...');
+                console.log('⏳ kakao.maps 모듈 로드 대기 중...');
             } else if (!kakao.maps.LatLng) {
-                console.log('⏳ kakao.maps.LatLng 객체 로드 대기 중...');
+                console.log('⏳ kakao.maps.LatLng 클래스 로드 대기 중...');
             } else if (typeof kakao.maps.LatLng !== 'function') {
-                console.log('⏳ kakao.maps.LatLng 함수 초기화 대기 중...');
+                console.log('⏳ kakao.maps.LatLng 생성자 초기화 대기 중...');
+            } else if (!kakao.maps.Map) {
+                console.log('⏳ kakao.maps.Map 클래스 로드 대기 중...');
+            } else if (typeof kakao.maps.Map !== 'function') {
+                console.log('⏳ kakao.maps.Map 생성자 초기화 대기 중...');
             }
             
-            // 500ms 후 다시 시도 (무한 반복)
-            setTimeout(checkKakaoAPI, 500);
+            // 300ms 후 다시 시도 (더 빠른 반응성)
+            setTimeout(checkKakaoAPI, 300);
         }
     }
     
-    // 1초 후 체크 시작
-    setTimeout(checkKakaoAPI, 1000);
+    // 즉시 체크 시작 (SDK load() 콜백 후 바로 실행)
+    setTimeout(checkKakaoAPI, 100);
 }
 
 // 지도 초기화 로직 (카카오 맵만 사용)

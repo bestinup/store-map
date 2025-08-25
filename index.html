@@ -33,32 +33,26 @@
             kakaoLoadAttempted = true;
         }
     </script>
+    <!-- 카카오맵 API 직접 로드 (비동기 문제 해결) -->
+    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=e2cdc03631e56cf5477a5fae91ffa305&autoload=false"></script>
     <script>
-        // 동적으로 카카오 스크립트 로드
-        function loadKakaoScript() {
-            return new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                script.type = 'text/javascript';
-                script.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=e2cdc03631e56cf5477a5fae91ffa305';
-                script.onload = function() {
-                    console.log('카카오 스크립트 로드 성공');
+        // 카카오맵 SDK 수동 초기화
+        function initKakaoSDK() {
+            if (window.kakao && window.kakao.maps) {
+                console.log('✅ 카카오 SDK 수동 초기화 시작');
+                kakao.maps.load(() => {
+                    console.log('✅ 카카오맵 서비스 로드 완료');
                     handleKakaoLoadSuccess();
-                    resolve();
-                };
-                script.onerror = function() {
-                    console.log('카카오 스크립트 로드 실패');
-                    handleKakaoLoadError();
-                    reject();
-                };
-                document.head.appendChild(script);
-            });
+                });
+            } else {
+                console.log('❌ 카카오 SDK 로드 실패');
+                handleKakaoLoadError();
+            }
         }
         
-        // 페이지 로드 시 카카오 스크립트 로드 시도
+        // 페이지 로드 후 SDK 초기화
         document.addEventListener('DOMContentLoaded', function() {
-            loadKakaoScript().catch(() => {
-                console.log('카카오 스크립트 로드 실패 - OpenStreetMap 사용');
-            });
+            setTimeout(initKakaoSDK, 100);
         });
     </script>
 </head>
