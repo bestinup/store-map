@@ -16,6 +16,15 @@
             console.log('카카오 맵 API 로드 성공');
             useKakaoMap = true;
             kakaoLoadAttempted = true;
+            
+            // API가 완전히 로드될 때까지 추가 대기
+            setTimeout(() => {
+                if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.LatLng) {
+                    console.log('카카오 맵 API 완전 초기화 완료');
+                } else {
+                    console.log('카카오 맵 API 아직 초기화 중...');
+                }
+            }, 500);
         }
         
         function handleKakaoLoadError() {
