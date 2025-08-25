@@ -81,6 +81,54 @@ const sampleStores = [
         phone: "062-678-9012",
         hours: "11:00 - 20:30",
         description: "정통 한국 분식을 맛볼 수 있는 곳입니다."
+    },
+    {
+        id: 7,
+        name: "광주편의점",
+        address: "광주광역시 북구 첨단과기로 145",
+        lat: 35.2281,
+        lng: 126.8435,
+        types: ["onnuri", "gwangju"],
+        category: "편의점",
+        phone: "062-717-8901",
+        hours: "24시간",
+        description: "24시간 언제든지 이용 가능한 편의점입니다."
+    },
+    {
+        id: 8,
+        name: "맛있는 치킨집",
+        address: "광주광역시 서구 치평로 234",
+        lat: 35.1521,
+        lng: 126.8723,
+        types: ["gwangju"],
+        category: "음식점",
+        phone: "062-384-5678",
+        hours: "16:00 - 24:00",
+        description: "바삭하고 맛있는 치킨 전문점입니다."
+    },
+    {
+        id: 9,
+        name: "동네서점",
+        address: "광주광역시 동구 금남로 156",
+        lat: 35.1456,
+        lng: 126.9167,
+        types: ["onnuri"],
+        category: "서점",
+        phone: "062-233-4567",
+        hours: "09:30 - 22:00",
+        description: "다양한 도서와 문구용품을 판매하는 서점입니다."
+    },
+    {
+        id: 10,
+        name: "건강식품점",
+        address: "광주광역시 남구 대남대로 567",
+        lat: 35.1398,
+        lng: 126.9134,
+        types: ["onnuri", "gwangju"],
+        category: "건강식품",
+        phone: "062-652-7890",
+        hours: "10:00 - 19:00",
+        description: "천연 건강식품과 영양제를 전문으로 판매합니다."
     }
 ];
 
@@ -94,19 +142,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // 지도 초기화 로직
 function initializeMap() {
-    console.log('=== 지도 초기화 디버깅 ===');
-    console.log('kakao 객체 존재:', typeof kakao !== 'undefined');
-    console.log('kakao.maps 존재:', typeof kakao !== 'undefined' && kakao.maps);
-    console.log('useKakaoMap 상태:', window.useKakaoMap);
-    console.log('kakaoLoadAttempted 상태:', window.kakaoLoadAttempted);
+    console.log('🗺️ 지도 시스템 초기화 중...');
     
     // 카카오 맵이 사용 가능한지 확인
-    if (typeof kakao !== 'undefined' && kakao.maps && window.useKakaoMap) {
-        console.log('✅ 카카오 맵 사용 시작');
+    if (typeof kakao !== 'undefined' && kakao.maps) {
+        console.log('✅ 카카오 맵 사용');
         try {
             mapType = 'kakao';
             initKakaoMap();
-            console.log('✅ 카카오 맵 초기화 성공');
+            console.log('🎉 카카오 맵 초기화 완료');
         } catch (error) {
             console.error('❌ 카카오 맵 초기화 실패:', error);
             console.log('🔄 OpenStreetMap으로 전환');
@@ -115,17 +159,7 @@ function initializeMap() {
         }
     } else {
         // OpenStreetMap 사용
-        console.log('🌍 OpenStreetMap 사용');
-        
-        // 실패 원인 분석
-        if (typeof kakao === 'undefined') {
-            console.log('원인: 카카오 스크립트 로드 실패');
-        } else if (!kakao.maps) {
-            console.log('원인: kakao.maps 객체 없음');
-        } else if (!window.useKakaoMap) {
-            console.log('원인: 도메인 미등록 또는 API 키 문제');
-        }
-        
+        console.log('🌍 OpenStreetMap 사용 (카카오 맵 로드 실패)');
         mapType = 'leaflet';
         initLeafletMap();
     }
@@ -136,6 +170,12 @@ function initializeMap() {
 
 // 카카오 지도 초기화
 function initKakaoMap() {
+    // 로딩 인디케이터 제거
+    const loadingIndicator = document.getElementById('loading-indicator');
+    if (loadingIndicator) {
+        loadingIndicator.style.display = 'none';
+    }
+    
     const container = document.getElementById('map');
     const options = {
         center: new kakao.maps.LatLng(35.1595, 126.8526), // 광주광역시 중심
@@ -158,6 +198,12 @@ function initKakaoMap() {
 
 // OpenStreetMap 지도 초기화
 function initLeafletMap() {
+    // 로딩 인디케이터 제거
+    const loadingIndicator = document.getElementById('loading-indicator');
+    if (loadingIndicator) {
+        loadingIndicator.style.display = 'none';
+    }
+    
     // Leaflet으로 지도 생성
     map = L.map('map').setView([35.1595, 126.8526], 13);
 
