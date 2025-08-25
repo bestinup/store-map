@@ -5,12 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>온누리상품권 & 광주상생카드 가맹점 지도</title>
     <link rel="stylesheet" href="styles.css">
-    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=98ffa625d54db78b33ce72ff85c3db4a"></script>
+    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=98ffa625d54db78b33ce72ff85c3db4a" 
+            onerror="handleKakaoLoadError()" onload="handleKakaoLoadSuccess()"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
     <div class="container">
         <header class="header">
             <h1>온누리상품권 & 광주상생카드 가맹점 지도</h1>
+            <div id="map-status" style="text-align: center; color: rgba(255,255,255,0.8); font-size: 0.85rem; margin-bottom: 10px;"></div>
             <div class="controls">
                 <div class="filter-group">
                     <label class="filter-label">

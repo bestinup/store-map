@@ -3,6 +3,8 @@ let map;
 let markers = [];
 let allStores = [];
 let filteredStores = [];
+let useKakaoMap = false;
+let mapType = 'none'; // 'kakao', 'leaflet', 'none'
 
 // 카카오맵 API 키 설정 (실제 사용시에는 본인의 API 키로 교체하세요)
 // const KAKAO_API_KEY = 'YOUR_KAKAO_API_KEY';
@@ -83,32 +85,43 @@ const sampleStores = [
     }
 ];
 
+// 카카오 맵 로드 성공 핸들러
+function handleKakaoLoadSuccess() {
+    console.log('카카오 맵 API 로드 성공');
+    useKakaoMap = true;
+    mapType = 'kakao';
+}
+
+// 카카오 맵 로드 실패 핸들러
+function handleKakaoLoadError() {
+    console.log('카카오 맵 API 로드 실패, OpenStreetMap으로 전환');
+    useKakaoMap = false;
+    mapType = 'leaflet';
+}
+
 // DOM이 로드된 후 실행
 document.addEventListener('DOMContentLoaded', function() {
-    // 카카오 맵 API가 로드되었는지 확인
-    if (typeof kakao !== 'undefined' && kakao.maps) {
-        initMap();
+    // 1초 후에 맵 초기화 시도 (API 로드 대기)
+    setTimeout(function() {
+        // 카카오 맵이 사용 가능한지 확인
+        if (typeof kakao !== 'undefined' && kakao.maps && useKakaoMap) {
+            console.log('카카오 맵 사용');
+            mapType = 'kakao';
+            initKakaoMap();
+        } else {
+            // OpenStreetMap 사용
+            console.log('OpenStreetMap 사용');
+            mapType = 'leaflet';
+            initLeafletMap();
+        }
+        
         initEventListeners();
         loadStores();
-    } else {
-        // 카카오 맵 API를 사용할 수 없는 경우 대체 메시지 표시
-        console.error('카카오 맵 API를 로드할 수 없습니다. 네트워크 연결을 확인해주세요.');
-        document.getElementById('map').innerHTML = 
-            '<div style="display: flex; justify-content: center; align-items: center; height: 100%; background-color: #f5f5f5; color: #666; font-size: 16px;">' +
-            '<div style="text-align: center;">' +
-            '<h3>지도를 로드할 수 없습니다</h3>' +
-            '<p>네트워크 연결을 확인하고 페이지를 새로고침해주세요.</p>' +
-            '<p>또는 인터넷 연결이 필요합니다.</p>' +
-            '</div>' +
-            '</div>';
-        // 매장 목록은 표시
-        initEventListeners();
-        loadStoresWithoutMap();
-    }
+    }, 1000);
 });
 
-// 지도 초기화
-function initMap() {
+// 카카오 지도 초기화
+function initKakaoMap() {
     const container = document.getElementById('map');
     const options = {
         center: new kakao.maps.LatLng(35.1595, 126.8526), // 광주광역시 중심
@@ -124,6 +137,23 @@ function initMap() {
     // 확대/축소 컨트롤 추가
     const zoomControl = new kakao.maps.ZoomControl();
     map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
+    
+    // 상태 표시
+    document.getElementById('map-status').innerHTML = '🗺️ 카카오 맵 사용 중';
+}
+
+// OpenStreetMap 지도 초기화
+function initLeafletMap() {
+    // Leaflet으로 지도 생성
+    map = L.map('map').setView([35.1595, 126.8526], 13);
+
+    // OpenStreetMap 타일 레이어 추가
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    // 상태 표시
+    document.getElementById('map-status').innerHTML = '🌍 OpenStreetMap 사용 중 (카카오 맵 로드 실패)';
 }
 
 // 이벤트 리스너 초기화
@@ -201,8 +231,17 @@ function performSearch() {
     updateStats();
 }
 
-// 지도 업데이트
+// 지도 업데이트 (하이브리드 버전)
 function updateMap() {
+    if (mapType === 'kakao') {
+        updateKakaoMap();
+    } else if (mapType === 'leaflet') {
+        updateLeafletMap();
+    }
+}
+
+// 카카오 지도 업데이트
+function updateKakaoMap() {
     // 기존 마커 제거
     markers.forEach(marker => marker.setMap(null));
     markers = [];
@@ -214,7 +253,6 @@ function updateMap() {
         // 마커 색상 결정
         let markerImage;
         if (store.types.includes('onnuri') && store.types.includes('gwangju')) {
-            // 두 카드 모두 사용 가능한 경우
             markerImage = createMarkerImage('#9b59b6'); // 보라색
         } else if (store.types.includes('onnuri')) {
             markerImage = createMarkerImage('#ff6b6b'); // 빨간색
@@ -244,6 +282,50 @@ function updateMap() {
             bounds.extend(new kakao.maps.LatLng(store.lat, store.lng));
         });
         map.setBounds(bounds);
+    }
+}
+
+// Leaflet 지도 업데이트
+function updateLeafletMap() {
+    // 기존 마커 제거
+    markers.forEach(marker => map.removeLayer(marker));
+    markers = [];
+    
+    // 새 마커 생성
+    filteredStores.forEach(store => {
+        // 마커 색상 결정
+        let iconColor = '#3388ff'; // 기본 파란색
+        if (store.types.includes('onnuri') && store.types.includes('gwangju')) {
+            iconColor = '#9b59b6'; // 보라색
+        } else if (store.types.includes('onnuri')) {
+            iconColor = '#ff6b6b'; // 빨간색
+        } else {
+            iconColor = '#4ecdc4'; // 청록색
+        }
+        
+        // 커스텀 아이콘 생성
+        const customIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style="background-color: ${iconColor}; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>`,
+            iconSize: [26, 26],
+            iconAnchor: [13, 13]
+        });
+        
+        const marker = L.marker([store.lat, store.lng], {icon: customIcon});
+        
+        // 마커 클릭 이벤트
+        marker.on('click', function() {
+            showStoreDetails(store);
+        });
+        
+        marker.addTo(map);
+        markers.push(marker);
+    });
+    
+    // 모든 마커가 보이도록 지도 범위 조정
+    if (filteredStores.length > 0) {
+        const group = new L.featureGroup(markers);
+        map.fitBounds(group.getBounds().pad(0.1));
     }
 }
 
@@ -292,8 +374,12 @@ function updateStoreList() {
         storeItem.addEventListener('click', () => {
             showStoreDetails(store);
             // 지도 중심을 해당 매장으로 이동
-            map.setCenter(new kakao.maps.LatLng(store.lat, store.lng));
-            map.setLevel(2);
+            if (mapType === 'kakao') {
+                map.setCenter(new kakao.maps.LatLng(store.lat, store.lng));
+                map.setLevel(2);
+            } else if (mapType === 'leaflet') {
+                map.setView([store.lat, store.lng], 16);
+            }
         });
         
         listContent.appendChild(storeItem);
