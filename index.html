@@ -78,6 +78,17 @@
                     <input type="text" id="search-input" placeholder="가게명 또는 주소로 검색">
                     <button id="search-btn">검색</button>
                 </div>
+                <div class="location-group">
+                    <button id="get-location-btn" class="location-btn">📍 내 위치 찾기</button>
+                    <div class="location-info" id="location-info" style="display: none;">
+                        <span id="location-status"></span>
+                    </div>
+                    <label class="filter-label location-filter">
+                        <input type="checkbox" id="nearby-filter">
+                        <span class="checkmark nearby"></span>
+                        300m 이내만 표시
+                    </label>
+                </div>
             </div>
         </header>
 

@@ -5,6 +5,12 @@ let allStores = [];
 let filteredStores = [];
 let mapType = 'none'; // 'kakao', 'leaflet', 'none'
 
+// 위치 관련 변수
+let userLocation = null;
+let userLocationMarker = null;
+let isLocationMode = false;
+let nearbyRadius = 300; // 300m 반경
+
 // 카카오맵 API 키 설정 (실제 사용시에는 본인의 API 키로 교체하세요)
 // const KAKAO_API_KEY = 'YOUR_KAKAO_API_KEY';
 
@@ -112,6 +118,9 @@ function initKakaoMap() {
     const zoomControl = new kakao.maps.ZoomControl();
     map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
     
+    // 지도 클릭 이벤트 설정
+    setupMapClick();
+    
     // 상태 표시
     document.getElementById('map-status').innerHTML = '🗺️ 카카오 맵 사용 중';
 }
@@ -132,6 +141,9 @@ function initLeafletMap() {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
     
+    // 지도 클릭 이벤트 설정
+    setupMapClick();
+    
     // 상태 표시
     document.getElementById('map-status').innerHTML = '🌍 OpenStreetMap 사용 중 (카카오 맵 로드 실패)';
 }
@@ -141,6 +153,17 @@ function initEventListeners() {
     // 필터 체크박스
     document.getElementById('onnuri-filter').addEventListener('change', applyFilters);
     document.getElementById('gwangju-filter').addEventListener('change', applyFilters);
+    document.getElementById('nearby-filter').addEventListener('change', function() {
+        if (this.checked && !userLocation) {
+            alert('먼저 위치를 설정해주세요.');
+            this.checked = false;
+            return;
+        }
+        applyFilters();
+    });
+    
+    // 위치 관련 기능
+    document.getElementById('get-location-btn').addEventListener('click', getCurrentLocation);
     
     // 검색 기능
     document.getElementById('search-btn').addEventListener('click', performSearch);
@@ -169,12 +192,28 @@ function loadStores() {
 function applyFilters() {
     const onnuriChecked = document.getElementById('onnuri-filter').checked;
     const gwangjuChecked = document.getElementById('gwangju-filter').checked;
+    const nearbyChecked = document.getElementById('nearby-filter').checked;
     
     filteredStores = allStores.filter(store => {
+        // 카드 타입 필터
         const hasOnnuri = store.types.includes('onnuri');
         const hasGwangju = store.types.includes('gwangju');
+        const typeMatch = (onnuriChecked && hasOnnuri) || (gwangjuChecked && hasGwangju);
         
-        return (onnuriChecked && hasOnnuri) || (gwangjuChecked && hasGwangju);
+        if (!typeMatch) return false;
+        
+        // 300m 반경 필터
+        if (nearbyChecked && userLocation) {
+            const distance = calculateDistance(
+                userLocation.lat, 
+                userLocation.lng, 
+                store.lat, 
+                store.lng
+            );
+            return distance <= nearbyRadius;
+        }
+        
+        return true;
     });
     
     updateMap();
@@ -420,22 +459,166 @@ function updateStore(storeId, updatedData) {
     }
 }
 
-// 현재 위치 찾기 (선택사항)
+// 거리 계산 함수 (Haversine 공식)
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371e3; // 지구 반경 (미터)
+    const φ1 = lat1 * Math.PI/180;
+    const φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180;
+    const Δλ = (lon2-lon1) * Math.PI/180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c; // 미터 단위
+}
+
+// GPS 위치 가져오기
 function getCurrentLocation() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
+    const locationBtn = document.getElementById('get-location-btn');
+    const locationInfo = document.getElementById('location-info');
+    const locationStatus = document.getElementById('location-status');
+    
+    if (!navigator.geolocation) {
+        alert('GPS를 지원하지 않는 브라우저입니다.');
+        return;
+    }
+    
+    locationBtn.disabled = true;
+    locationBtn.textContent = '📍 위치 찾는 중...';
+    
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
-            const locPosition = new kakao.maps.LatLng(lat, lng);
             
-            map.setCenter(locPosition);
+            setUserLocation(lat, lng, '현재 GPS 위치');
+            locationBtn.disabled = false;
+            locationBtn.textContent = '📍 내 위치 찾기';
+        },
+        function(error) {
+            let errorMessage = '';
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage = '위치 접근이 거부되었습니다.';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage = '위치 정보를 사용할 수 없습니다.';
+                    break;
+                case error.TIMEOUT:
+                    errorMessage = '위치 요청이 시간 초과되었습니다.';
+                    break;
+                default:
+                    errorMessage = '알 수 없는 오류가 발생했습니다.';
+                    break;
+            }
             
-            // 현재 위치 마커 표시
-            const currentMarker = new kakao.maps.Marker({
-                position: locPosition,
-                image: createMarkerImage('#2ecc71') // 녹색
-            });
-            currentMarker.setMap(map);
+            locationStatus.textContent = errorMessage;
+            locationInfo.style.display = 'block';
+            locationBtn.disabled = false;
+            locationBtn.textContent = '📍 내 위치 찾기';
+            
+            setTimeout(() => {
+                locationInfo.style.display = 'none';
+            }, 3000);
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000
+        }
+    );
+}
+
+// 사용자 위치 설정
+function setUserLocation(lat, lng, source = '클릭') {
+    userLocation = { lat, lng };
+    
+    const locationInfo = document.getElementById('location-info');
+    const locationStatus = document.getElementById('location-status');
+    
+    locationStatus.textContent = `${source}: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    locationInfo.style.display = 'block';
+    
+    // 지도에 사용자 위치 마커 표시
+    updateUserLocationMarker();
+    
+    // 지도 중심을 사용자 위치로 이동
+    if (mapType === 'kakao' && map) {
+        const locPosition = new kakao.maps.LatLng(lat, lng);
+        map.setCenter(locPosition);
+        map.setLevel(4); // 적절한 줌 레벨로 설정
+    } else if (mapType === 'leaflet' && map) {
+        map.setView([lat, lng], 16);
+    }
+    
+    // 근처 매장 필터 체크박스가 활성화되어 있으면 필터링 적용
+    const nearbyFilter = document.getElementById('nearby-filter');
+    if (nearbyFilter.checked) {
+        applyFilters();
+    }
+}
+
+// 사용자 위치 마커 업데이트
+function updateUserLocationMarker() {
+    if (!userLocation) return;
+    
+    // 기존 마커 제거
+    if (userLocationMarker) {
+        if (mapType === 'kakao') {
+            userLocationMarker.setMap(null);
+        } else if (mapType === 'leaflet') {
+            map.removeLayer(userLocationMarker);
+        }
+        userLocationMarker = null;
+    }
+    
+    // 새 마커 생성
+    if (mapType === 'kakao' && map) {
+        const locPosition = new kakao.maps.LatLng(userLocation.lat, userLocation.lng);
+        userLocationMarker = new kakao.maps.Marker({
+            position: locPosition,
+            image: createUserLocationMarkerImage()
+        });
+        userLocationMarker.setMap(map);
+    } else if (mapType === 'leaflet' && map) {
+        userLocationMarker = L.marker([userLocation.lat, userLocation.lng], {
+            icon: L.divIcon({
+                className: 'user-location-marker',
+                html: '📍',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            })
+        }).addTo(map);
+    }
+}
+
+// 사용자 위치 마커 이미지 생성 (카카오맵용)
+function createUserLocationMarkerImage() {
+    return new kakao.maps.MarkerImage(
+        'data:image/svg+xml;base64,' + btoa(`
+            <svg width="30" height="30" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="15" cy="15" r="12" fill="#2ecc71" stroke="white" stroke-width="3"/>
+                <text x="15" y="20" font-size="14" text-anchor="middle" fill="white">📍</text>
+            </svg>
+        `),
+        new kakao.maps.Size(30, 30),
+        { offset: new kakao.maps.Point(15, 15) }
+    );
+}
+
+// 지도 클릭으로 위치 설정
+function setupMapClick() {
+    if (mapType === 'kakao' && map) {
+        kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
+            const latlng = mouseEvent.latLng;
+            setUserLocation(latlng.getLat(), latlng.getLng(), '지도 클릭');
+        });
+    } else if (mapType === 'leaflet' && map) {
+        map.on('click', function(e) {
+            setUserLocation(e.latlng.lat, e.latlng.lng, '지도 클릭');
         });
     }
 }

@@ -77,6 +77,11 @@ body {
     border: 2px solid rgba(78, 205, 196, 0.3);
 }
 
+.checkmark.nearby {
+    background-color: #ffa726;
+    border: 2px solid rgba(255, 167, 38, 0.3);
+}
+
 .filter-label input[type="checkbox"]:checked + .checkmark::after {
     content: '✓';
     position: absolute;
@@ -95,6 +100,56 @@ body {
 .search-group {
     display: flex;
     gap: 10px;
+}
+
+.location-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.location-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.location-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.location-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.location-info {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.9);
+    text-align: center;
+    padding: 5px 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+}
+
+.location-filter {
+    margin-top: 5px;
+}
+
+/* 사용자 위치 마커 스타일 (Leaflet용) */
+.user-location-marker {
+    background: transparent !important;
+    border: none !important;
+    color: #2ecc71;
+    font-size: 24px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
 }
 
 #search-input {
