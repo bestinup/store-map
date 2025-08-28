@@ -3,138 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>온누리상품권 & 광주상생카드 가맹점 지도</title>
+    <title>광주 지역 상생카드 매장 지도</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Kakao Map API -->
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=e2cdc03631e56cf5477a5fae91ffa305"></script>
+    <!-- OpenStreetMap (Leaflet) - 백업용 -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        // 전역 변수와 핸들러를 먼저 정의
-        let useKakaoMap = false;
-        let kakaoLoadAttempted = false;
-        
-        function handleKakaoLoadSuccess() {
-            console.log('카카오 맵 API 로드 성공');
-            useKakaoMap = true;
-            kakaoLoadAttempted = true;
-            
-            // API가 완전히 로드될 때까지 추가 대기
-            setTimeout(() => {
-                if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.LatLng) {
-                    console.log('카카오 맵 API 완전 초기화 완료');
-                } else {
-                    console.log('카카오 맵 API 아직 초기화 중...');
-                }
-            }, 500);
-        }
-        
-        function handleKakaoLoadError() {
-            console.log('카카오 맵 API 로드 실패');
-            useKakaoMap = false;
-            kakaoLoadAttempted = true;
-        }
-    </script>
-    <!-- 카카오맵 API 직접 로드 (비동기 문제 해결) -->
-    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=e2cdc03631e56cf5477a5fae91ffa305&autoload=false"></script>
-    <script>
-        // 카카오맵 SDK 수동 초기화
-        function initKakaoSDK() {
-            if (window.kakao && window.kakao.maps) {
-                console.log('✅ 카카오 SDK 수동 초기화 시작');
-                kakao.maps.load(() => {
-                    console.log('✅ 카카오맵 서비스 로드 완료');
-                    handleKakaoLoadSuccess();
-                });
-            } else {
-                console.log('❌ 카카오 SDK 로드 실패');
-                handleKakaoLoadError();
-            }
-        }
-        
-        // 페이지 로드 후 SDK 초기화
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(initKakaoSDK, 100);
-        });
-    </script>
 </head>
 <body>
     <div class="container">
-        <header class="header">
-            <h1>온누리상품권 & 광주상생카드 가맹점 지도</h1>
-            <div id="map-status" style="text-align: center; color: rgba(255,255,255,0.8); font-size: 0.85rem; margin-bottom: 10px;"></div>
-            <div class="controls">
-                <div class="filter-group">
-                    <label class="filter-label">
-                        <input type="checkbox" id="onnuri-filter" checked>
-                        <span class="checkmark onnuri"></span>
-                        온누리상품권 가맹점
-                    </label>
-                    <label class="filter-label">
-                        <input type="checkbox" id="gwangju-filter" checked>
-                        <span class="checkmark gwangju"></span>
-                        광주상생카드 가맹점
-                    </label>
-                </div>
-                <div class="search-group">
-                    <input type="text" id="search-input" placeholder="가게명 또는 주소로 검색">
-                    <button id="search-btn">검색</button>
-                </div>
-                <div class="location-group">
-                    <button id="get-location-btn" class="location-btn">📍 내 위치 찾기</button>
-                    <div class="location-info" id="location-info" style="display: none;">
-                        <span id="location-status"></span>
-                    </div>
-                    <label class="filter-label location-filter">
-                        <input type="checkbox" id="nearby-filter">
-                        <span class="checkmark nearby"></span>
-                        300m 이내만 표시
-                    </label>
-                </div>
-            </div>
+        <header>
+            <h1>🏪 광주 지역 매장 지도</h1>
+            <p>광주상생카드 사용 가능 매장을 확인하세요</p>
         </header>
-
-        <main class="main-content">
-            <div id="map" class="map-container">
-                <div id="loading-indicator" style="display: flex; justify-content: center; align-items: center; height: 100%; background-color: #f8f9fa; color: #666; font-size: 16px;">
-                    <div style="text-align: center;">
-                        <div style="width: 40px; height: 40px; border: 4px solid #e3e3e3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
-                        <div>지도를 불러오는 중...</div>
-                    </div>
+        
+        <!-- 컨트롤 패널 -->
+        <div class="controls">
+            <div class="location-controls">
+                <button id="getLocationBtn" class="btn-primary">📍 현재 위치 찾기</button>
+                <button id="findNearbyBtn" class="btn-secondary" disabled>🔍 근처 매장 (300m)</button>
+                <span id="locationInfo" class="location-info"></span>
+            </div>
+            
+            <div class="filter-controls">
+                <div class="card-type-filter">
+                    <label><input type="checkbox" id="filterGwangju" checked> 광주상생카드</label>
+                </div>
+                
+                <div class="nearby-filter">
+                    <label><input type="checkbox" id="showNearbyOnly"> 근처 매장만 표시 (300m)</label>
                 </div>
             </div>
             
-            <div class="sidebar">
-                <div class="stats">
-                    <div class="stat-item">
-                        <span class="stat-label">온누리상품권</span>
-                        <span class="stat-count" id="onnuri-count">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">광주상생카드</span>
-                        <span class="stat-count" id="gwangju-count">0</span>
-                    </div>
-                </div>
-                
-                <div class="store-list">
-                    <h3>가맹점 목록</h3>
-                    <div id="store-list-content">
-                        <!-- 매장 목록이 여기에 동적으로 추가됩니다 -->
-                    </div>
-                </div>
+            <div class="search-controls">
+                <input type="text" id="searchInput" placeholder="매장명 또는 주소 검색...">
+                <button id="searchBtn" class="btn-search">검색</button>
             </div>
-        </main>
-    </div>
+        </div>
 
-    <!-- 매장 정보 모달 -->
-    <div id="store-modal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <div id="modal-body">
-                <!-- 매장 상세 정보가 여기에 표시됩니다 -->
-            </div>
+        <!-- 지도 컨테이너 -->
+        <div id="map" class="map-container"></div>
+        
+        <!-- 매장 리스트 -->
+        <div class="store-list-container">
+            <h3>매장 목록 <span id="storeCount">(로딩 중...)</span></h3>
+            <div id="storeList" class="store-list"></div>
+        </div>
+        
+        <!-- 로딩 인디케이터 -->
+        <div id="loadingIndicator" class="loading" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p>위치 정보를 가져오는 중...</p>
+        </div>
+        
+        <!-- GPS 허용 안내 -->
+        <div id="gpsHelp" class="gps-help" style="display: none;">
+            <h4>📍 위치 서비스 활성화 방법</h4>
+            <p><strong>Chrome/Edge:</strong> 주소창 왼쪽 🔒 또는 ⓘ 아이콘 클릭 → "위치" 허용</p>
+            <p><strong>Firefox:</strong> 주소창 왼쪽 🛡️ 아이콘 클릭 → 권한 → 위치 허용</p>
+            <p><strong>Safari:</strong> Safari 메뉴 → 환경설정 → 웹사이트 → 위치 서비스</p>
+            <button onclick="document.getElementById('gpsHelp').style.display='none'">확인</button>
         </div>
     </div>
 
-    <script src="real_stores.js"></script>
+    <!-- 매장 데이터 로딩 -->
+    <script src="combined_stores.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
